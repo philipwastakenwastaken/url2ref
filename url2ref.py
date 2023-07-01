@@ -10,6 +10,8 @@ import pprint
 import re
 import wayback
 
+input_url = None
+
 Attribute = Enum('Attribute', ['URL', 'TITLE', 'AUTHORS', 'DATE', 'WORK', 'PUBLISHER', 'ACCESS'])
 
 # TODO: Move lookup list information to separate file
@@ -159,15 +161,36 @@ def create_wiki_reference(attributes):
                            publisher=attributes[Attribute.PUBLISHER], access=attributes[Attribute.ACCESS], last=last, first=first, 
                            archive_url=archive_url, archive_date=archive_date)
 
-def main():
-    url = input("Enter website URL:")
+def url2ref(url):
     metadata = extract_metadata(url)
     attributes = get_reference_attributes(metadata)
     wiki_ref = create_wiki_reference(attributes)
+
+    return wiki_ref
+
+def main():
+    wiki_ref = url2ref(input_url)
 
     #pprint.pprint(attributes)
     #pprint.pprint(metadata)
     pprint.pprint(wiki_ref)
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        default='',
+        help="URL to create a reference from",
+    )
+
+    args = parser.parse_args()
+
+    if args.url:
+        input_url = args.url
+    
     main()
