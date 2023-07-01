@@ -1,55 +1,29 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "layout.html" %}
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
-    <style>
-      .c-row {
-        height: 80vh;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="row c-row align-items-center">
-        <div>
-          <div>
-            <h1>url2ref</h1>
-            <p>From url to ref, as per the name</p>
-          </div>
-          <div class="content">
-            <form method="POST" action="">
-              {{ form.hidden_tag() }}
-              <fieldset class="form-group">
-                <div class="form-group">
-                  {{ form.field.label }}
-                  {{ form.field }}
-                </div>
-                <div class="form-group">
-                  {{ form.submit }}
-                </div>
-              </fieldset>
-              <div>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% if messages %}
-                    {% for category, message in messages %}
-                      <div>
-                        {{ message }}
-                      </div>
-                    {% endfor %}
-                  {% endif %}
-                {% endwith %}
-              </div>
-            </form>
-          </div>
+{% block content %}
+<div class="d-flex justify-content-center">
+  <div class="content">
+    <form method="POST" action="">
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+        <div class="form-group">
+          {{ form.field.label }}
+          {{ form.field }}
+          {{ form.submit }}
         </div>
+      </fieldset>
+      <div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
       </div>
-    </div>
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
-  </body>
-</html>
+    </form>
+  </div>
+</div>
+{% endblock content %}

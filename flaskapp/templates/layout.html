@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <!-- OpenGraph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://url2ref.onrender.com/">
+    <meta property="og:title" content="url2ref">
+    <meta property="og:description" content="Application for creating a reference given a web address">
+    <meta property="og:image" content="{{ url_for('static', filename='favicon.ico') }}">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Application for creating a reference given a web address">
+    <meta name="keywords" content="reference generator, url2ref">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
+    <title>url2ref</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  </head>
+
+  <body class="d-flex flex-column">
+    <!-- Header -->
+    <div class="bg-primary bg-gradient mb-4">
+      <div class="banner py-4 text-white shadow">
+        <h1 class="text-center m-4"><b>url2ref</b></h1>
+        <p class="text-center">From URL to reference as per the name</p>
+      </div>
+    </div>
+
+    <!-- Container -->
+    <div class="d-flex container-fluid flex-fill justify-content-center">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p class="text-center">A <a href="https://github.com/BX326/url2ref">project</a> by BX326 (2023)</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+ 
+    <!-- Toggle plugin for bootstrap -->
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+
+    <link href="static/styles.css" rel="stylesheet">
+  </body>
+</html>
