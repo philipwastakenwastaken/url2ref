@@ -1,6 +1,7 @@
 # url2ref &ndash; create a reference from a web address
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Website](https://img.shields.io/website/https/url2ref.onrender.com?up_message=online&down_message=offline)](https://url2ref.onrender.com)
 
 ## Motivation
 
