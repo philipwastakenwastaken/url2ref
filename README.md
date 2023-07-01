@@ -8,7 +8,7 @@ Manually citing a news article on the web in a thorough manner can be a tedious 
 
 ## Front end
 
-The application has a web front end hosted by [Render](https://render.com), making it easy to retrieve a reference simply by pasting a URL into the query field.
+The application [has a web front end](https://url2ref.onrender.com/) hosted by [Render](https://render.com), making it easy to retrieve a reference simply by pasting a URL into the query field.
 
 ## License
 
