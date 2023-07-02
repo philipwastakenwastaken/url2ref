@@ -2,9 +2,9 @@ from enum import Enum
 from collections import defaultdict
 from w3lib.html import get_base_url
 from dateutil.parser import parse, parserinfo
+from babel.dates import format_date, format_datetime, format_time
 
 import extruct
-import locale
 import requests
 import pprint
 import re
@@ -125,10 +125,10 @@ def get_sub_dictionary(dictionary, target_key, target_value):
                     return item
 
 def create_wiki_reference(attributes):
-    # TODO: Format the date independently of locale
-    locale.setlocale(locale.LC_TIME, 'da_DK')
-    date_format = '%d. %B %Y'
-    date = parse(attributes[Attribute.DATE]).strftime(date_format).lstrip('0')
+    locale = 'da_DK'
+
+    # Formatting date
+    date = format_date(parse(attributes[Attribute.DATE]), format='long', locale=locale)
 
     # TODO: Parse authors (support multiple authors), format string and insert it within larger citation string
     author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
@@ -148,7 +148,7 @@ def create_wiki_reference(attributes):
     if mementos:
         memento = client.get_memento(mementos[0])
         archive_url = memento.memento_url
-        archive_date = memento.timestamp.strftime(date_format)
+        archive_date = format_date(memento.timestamp, format='long', locale=locale)
     client.close()
 
     # TODO: Parse remaining attributes, such as ACCESS
