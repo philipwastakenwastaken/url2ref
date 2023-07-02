@@ -2,8 +2,6 @@
 flaskapp/static/assets/node_modules
 flaskapp/static/css
 flaskapp/static/js
-package.json
-package-lock.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
