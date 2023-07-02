@@ -5,5 +5,8 @@ w3lib==2.1.1
 wayback==0.4.2
 Flask==2.2.5
 Flask_WTF==1.1.1
+Flask-Assets==2.0
+jsmin==3.0.1
+libsass==0.22.0
 WTForms==3.0.1
 gunicorn==20.0.4
