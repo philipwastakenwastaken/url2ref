@@ -1,29 +1,22 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-center">
-  <div class="content">
-    <form method="POST" action="">
-      {{ form.hidden_tag() }}
-      <fieldset class="form-group">
-        <div class="form-group">
-          {{ form.field.label }}
-          {{ form.field }}
-          {{ form.submit }}
-        </div>
-      </fieldset>
-      <div>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div>
-                {{ message }}
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
-    </form>
+<form class="form-inline d-flex justify-content-center pb-4" method="POST" action="">
+  {{ form.hidden_tag() }}
+  <div class="form-group">
+    {{ form.field }}
+    {{ form.submit }}
   </div>
+</form>
+<div class="pb-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 </div>
 {% endblock content %}

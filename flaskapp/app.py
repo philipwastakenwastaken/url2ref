@@ -38,7 +38,7 @@ assets.register("scss_all", scss)
 def home():
     form = UrlInputForm()
     if form.validate_on_submit():
-        flash(f'Reference: {url2ref(form.field.data)}', 'success')
+        flash(f'{url2ref(form.field.data)}', 'success')
     return render_template('home.html', form=form)
 
 if __name__ == '__main__':
