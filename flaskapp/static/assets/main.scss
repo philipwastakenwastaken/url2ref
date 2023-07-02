@@ -1,0 +1,13 @@
+// Include any default variable overrides here (though functions won't be available)
+$primary: #000720;
+
+@import "node_modules/bootstrap/scss/bootstrap";
+
+// Then add additional custom code here
+body {
+    min-height:100vh;
+ }
+ 
+.flex-fill {
+    flex:1 1 auto;
+}
