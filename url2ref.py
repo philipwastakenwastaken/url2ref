@@ -2,13 +2,15 @@ from enum import Enum
 from collections import defaultdict
 from w3lib.html import get_base_url
 from dateutil.parser import parse, parserinfo
-from babel.dates import format_date, format_datetime, format_time
+from babel.dates import format_date
+from translate import Translator
 
 import extruct
 import requests
 import pprint
 import re
 import wayback
+import fasttext
 
 input_url = None
 
@@ -156,10 +158,28 @@ def create_wiki_reference(attributes):
 
     wiki_ref = '{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
           '|date={date} |work={work} |publisher={publisher} |url-access={access} ' \
-          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live}}}}'
-    return wiki_ref.format(title=attributes[Attribute.TITLE], url=attributes[Attribute.URL], date=date, work=attributes[Attribute.WORK], 
+          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live'
+    wiki_ref = wiki_ref.format(title=attributes[Attribute.TITLE], url=attributes[Attribute.URL], date=date, work=attributes[Attribute.WORK], 
                            publisher=attributes[Attribute.PUBLISHER], access=attributes[Attribute.ACCESS], last=last, first=first, 
                            archive_url=archive_url, archive_date=archive_date)
+
+    lang_detector = fasttext.load_model('fasttext/lid.176.ftz')
+    prediction = lang_detector.predict(attributes[Attribute.TITLE], k=1)
+    # Grab the language label and remove the '__label__' prefix
+    src_lang = prediction[0][0][9:]
+    pred_confidence = prediction[1][0]
+
+    # Translate the title if article language differs from user language
+    dst_lang = 'en'
+    if (dst_lang != src_lang and pred_confidence >= 0.85):
+        translator = Translator(dst_lang, src_lang)
+        translation = translator.translate(attributes[Attribute.TITLE])
+        ref_ext = ' |language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
+        wiki_ref += ref_ext
+
+    wiki_ref += '}}}}'
+
+    return wiki_ref
 
 def url2ref(url):
     metadata = extract_metadata(url)
