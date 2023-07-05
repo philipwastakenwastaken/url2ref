@@ -1,6 +1,7 @@
 from enum import Enum
 from collections import defaultdict
 from w3lib.html import get_base_url
+from datetime import datetime
 from babel.dates import format_date
 from translate import Translator
 
@@ -10,8 +11,13 @@ import requests
 import pprint
 import re
 import wayback
+import wayback.exceptions
 import fasttext
 import os
+
+# Supress FastText warning
+# See: https://stackoverflow.com/a/66401601
+fasttext.FastText.eprint = lambda x: None
 
 input_url = None
 
@@ -108,7 +114,8 @@ def extract_metadata(url):
     
     r = requests.get(url, headers=headers)
     base_url = get_base_url(r.text, r.url)
-    metadata = extruct.extract(r.text, base_url=base_url, uniform=True)
+    encoded_content = r.text.encode('utf-8')
+    metadata = extruct.extract(encoded_content, encoding='utf-8', base_url=base_url, uniform=True)
 
     return metadata
 
@@ -139,16 +146,27 @@ def create_wiki_reference(attributes):
     Returns:
         wiki_ref: {{Cite web}} string reference in Wiki markup
     """
+    url = attributes[Attribute.URL]
+
     locale = attributes[Attribute.LOCALE]
     if not locale:
         locale = 'en_US'
 
     # Formatting date
-    try:
-        parsed_date = dateutil.parser.parse(attributes[Attribute.DATE])
-        date = format_date(parsed_date, format='long', locale=locale)
-    except dateutil.parser.ParserError:
-        date = ''
+    date = attributes[Attribute.DATE]
+    date_ext = ''
+    access_date_ext = ''
+    if date:
+        try:
+            parsed_date = dateutil.parser.parse(date)
+            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=locale))
+        except dateutil.parser.ParserError:
+            date_ext = '' 
+
+    # Setting access-date if date of publication isn't found
+    if date_ext == '':
+        now = datetime.now()
+        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=locale))
 
     # TODO: Parse authors (support multiple authors), format string and insert it within larger citation string
     author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
@@ -167,14 +185,22 @@ def create_wiki_reference(attributes):
 
     # Use wayback to construct an archive URL and date
     client = wayback.WaybackClient()
-    mementos = list(client.search(url=attributes[Attribute.URL]))
     archive_url = ''
     archive_date = ''
-    if mementos:
-        memento = client.get_memento(mementos[0])
+    try:
+        target_window = 62208000 # Two years expressed in seconds
+        memento = client.get_memento(url=url, timestamp=datetime.now(), exact=False, target_window=target_window)
         archive_url = memento.memento_url
         archive_date = format_date(memento.timestamp, format='long', locale=locale)
+    except wayback.exceptions.MementoPlaybackError:
+        pass
     client.close()
+
+    # Publisher
+    publisher = attributes[Attribute.PUBLISHER]
+    publisher_ext = ''
+    if publisher:
+        publisher_ext = '|publisher={}'.format(publisher)
 
     # Predict title language
     model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
@@ -201,11 +227,12 @@ def create_wiki_reference(attributes):
         access_ext = '|url-access=subscription'
 
     wiki_ref = '{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
-          '|date={date} |work={work} |publisher={publisher} ' \
-          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {transtitle} {access} }}}}'
-    wiki_ref = wiki_ref.format(title=attributes[Attribute.TITLE], url=attributes[Attribute.URL], date=date, work=attributes[Attribute.WORK], 
-                           publisher=attributes[Attribute.PUBLISHER], last=last, first=first, 
-                           archive_url=archive_url, archive_date=archive_date, transtitle=trans_ext, access=access_ext)
+          '{date} {access_date} |work={work} {publisher} ' \
+          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {trans_title} {access} }}}}'
+    wiki_ref = wiki_ref.format(title=attributes[Attribute.TITLE], url=url, date=date_ext, 
+                               access_date=access_date_ext, work=attributes[Attribute.WORK], 
+                               publisher=publisher_ext, last=last, first=first, archive_url=archive_url, 
+                               archive_date=archive_date, trans_title=trans_ext, access=access_ext)
     # Remove redundant and trailing spaces
     wiki_ref = ' '.join(wiki_ref.split())
 
