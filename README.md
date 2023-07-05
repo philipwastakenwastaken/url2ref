@@ -28,3 +28,5 @@ To build and run the front end locally, first install the required Python packag
 ## License
 
 The code in this project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0).
+
+The ``lid.176.ftz`` model for language identification is [distributed by FastText](https://fasttext.cc/docs/en/language-identification.html) and licensed under [CC-BY-SA 3.0](http://creativecommons.org/licenses/by-sa/3.0/). See [fasttext/ATTRIBUTION.md](./fasttext) for more details.
