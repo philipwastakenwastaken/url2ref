@@ -11,9 +11,19 @@ Manually citing a news article on the web in a thorough manner can be a tedious 
 
 The application [has a web front end](https://url2ref.onrender.com/) hosted by [Render](https://render.com), making it easy to retrieve a reference simply by pasting a URL into the query field. The front end is created with [Bootstrap via npm](https://getbootstrap.com/docs/5.0/getting-started/download/#npm).
 
-## Building locally
+## Local execution
 
-To build and run the application locally, first install the required Python packages by running ``pip install -r requirements.txt`` &ndash; preferably within a virtual environment &ndash; and then install the needed Bootstrap files with ``npm i bootstrap @popperjs/core`` from within the ``flaskapp/static/assets`` folder. Then, a Flask development server can be started locally with ``flask --app app --debug run``.
+### Script
+
+The application can be executed as a script from the command-line after installing the required packages with ``pip install -r requirements.txt``. To generate a [wiki reference](https://en.wikipedia.org/wiki/Template:Cite_web) for a given URL, simply type:
+
+```bash
+python url2ref.py -u <URL>
+```
+
+### Flask app
+
+To build and run the front end locally, first install the required Python packages by running ``pip install -r requirements.txt`` &ndash; preferably within a virtual environment &ndash; and then install the needed Bootstrap files with ``npm i bootstrap @popperjs/core`` from within the ``flaskapp/static/assets`` folder. Then, a Flask development server can be started locally with ``flask --app app --debug run``.
 
 ## License
 
