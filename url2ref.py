@@ -16,6 +16,7 @@ import wayback.exceptions
 import fasttext
 import os
 import deepl
+import tldextract
 
 # Supress FastText warning
 # See: https://stackoverflow.com/a/66401601
@@ -23,7 +24,7 @@ fasttext.FastText.eprint = lambda x: None
 
 input_url = None
 
-Attribute = Enum('Attribute', ['URL', 'TITLE', 'AUTHORS', 'DATE', 'WORK', 'PUBLISHER', 'ACCESS', 'LOCALE'])
+Attribute = Enum('Attribute', ['URL', 'TITLE', 'AUTHORS', 'DATE', 'WEBSITE', 'PUBLISHER', 'ACCESS', 'LANGUAGE'])
 
 # TODO: Move lookup list information to separate file
 # Lookup lists for each format to use for attribute fetching
@@ -41,6 +42,7 @@ lookup_author = [('json-ld', ['author', 'name']),
                  ('rdfa', ['http://ogp.me/ns/article#author'])]
 lookup_title = [('json-ld', ['headline']), 
                 ('opengraph', ['og:title']),
+                ('json-ld', ['alternativeHeadline']),
                 ('opengraph', ['og:site_name'])]
 lookup_date = [('json-ld', ['datePublished']),
                ('opengraph', ['article:published_time']),
@@ -50,12 +52,15 @@ lookup_date = [('json-ld', ['datePublished']),
                # without an explicit publication date:
                ('opengraph', ['article:modified_time']),
                ('opengraph', ['og:article:modified_time'])]
-lookup_work = [('opengraph', ['og:site_name'])]
+lookup_website = [('opengraph', ['og:site_name'])]
+               #('json-ld', ['sourceOrganization', 'name']),
+               #('json-ld', ['copyrightHolder', 'name'])]
 lookup_publisher = [('json-ld', ['publisher', 'name'])]
 lookup_access = [('json-ld', ['isAccessibleForFree']),
                  ('json-ld', ['hasPart', 'isAccessibleForFree']),
                  ('rdfa', ['lp:type'])]
-lookup_locale = [('opengraph', ['og:locale'])]  
+lookup_language = [('json-ld', ['inLanguage']),
+                   ('opengraph', ['og:locale'])]
 
 def fetch_attribute(lookup_dict, metadata):
     """Returns a value associated with the metadata item in the given lookup dictionary.
@@ -94,10 +99,10 @@ def get_reference_attributes(metadata):
     attributes[Attribute.TITLE]     = fetch_attribute(lookup_title, metadata)
     attributes[Attribute.AUTHORS]   = fetch_attribute(lookup_author, metadata)
     attributes[Attribute.DATE]      = fetch_attribute(lookup_date, metadata)
-    attributes[Attribute.WORK]      = fetch_attribute(lookup_work, metadata)
+    attributes[Attribute.WEBSITE]   = fetch_attribute(lookup_website, metadata)
     attributes[Attribute.PUBLISHER] = fetch_attribute(lookup_publisher, metadata)
     attributes[Attribute.ACCESS]    = fetch_attribute(lookup_access, metadata)
-    attributes[Attribute.LOCALE]    = fetch_attribute(lookup_locale, metadata)
+    attributes[Attribute.LANGUAGE]  = fetch_attribute(lookup_language, metadata)
 
     return attributes
 
@@ -112,7 +117,7 @@ def extract_metadata(url):
     """
     # Using custom header as some websites, such as The New York Times, 
     # reject requests from the standard header used by the 'requests' library
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0'}
     
     r = requests.get(url, headers=headers)
     base_url = get_base_url(r.text, r.url)
@@ -140,6 +145,15 @@ def get_sub_dictionary(dictionary, target_key, target_value):
                     return item
 
 def translate(text, target_lang):
+    """Return a translated text given a text and a target language.
+    
+    Args:
+        text: A text string
+        target_lang: An ISO 639-1 code specifying the target language
+
+    Returns:
+        translation: The translated text
+    """
     # Predict language of text
     model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
     lang_detector = fasttext.load_model(model_loc)
@@ -155,7 +169,7 @@ def translate(text, target_lang):
     translation = ''
     # Translate if text differs from target language
     # with certain confidence
-    if (target_lang[:2] != src_lang and pred_confidence >= .5):
+    if (target_lang != src_lang and pred_confidence >= .5):
         translator = None
 
         # If DeepL API key is available, use DeepL for translation.
@@ -172,12 +186,11 @@ def translate(text, target_lang):
             # as the language codes are in upper case
             target_lang = target_lang.upper()
             language_match = difflib.get_close_matches(target_lang, language_codes, n=1, cutoff=0)[0]
-            print(language_match)
-            #translation = translator.translate_text(text=text,
-                                                    #source_lang=src_lang,
-                                                    #target_lang=language_match).text
+            translation = translator.translate_text(text=text,
+                                                    source_lang=src_lang,
+                                                    target_lang=language_match).text
         else:
-            translator = Translator(target_lang[:2], src_lang)
+            translator = Translator(target_lang, src_lang)
             translation = translator.translate(text)
 
     return translation, src_lang
@@ -193,7 +206,7 @@ def create_wiki_reference(attributes):
     """
     url = attributes[Attribute.URL]
 
-    locale = attributes[Attribute.LOCALE]
+    locale = attributes[Attribute.LANGUAGE]
     if not locale:
         locale = 'en_US'
 
@@ -240,6 +253,15 @@ def create_wiki_reference(attributes):
         pass
     client.close()
 
+    # Website
+    website = attributes[Attribute.WEBSITE]
+    if not website:
+        try:
+            results = tldextract.extract(url)
+            website = '.'.join(results[-2:])
+        except:
+            website = ''
+
     # Publisher
     publisher = attributes[Attribute.PUBLISHER]
     publisher_ext = ''
@@ -250,8 +272,14 @@ def create_wiki_reference(attributes):
     title = attributes[Attribute.TITLE]
     trans_ext = ''
     if title:
-        translation, src_lang = translate(text=title, target_lang='en_US')
-        trans_ext = '|language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
+        # TODO: Set target lang depending on provided user parameter 
+        # in command / front end
+        target_lang = 'en'
+        translation, src_lang = translate(text=title, target_lang=target_lang)
+        if src_lang == target_lang:
+            trans_ext = ''
+        else:
+            trans_ext = '|language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
     
     # Check access
     # TODO: Instead of assuming subscription is required, instead ask
@@ -262,12 +290,12 @@ def create_wiki_reference(attributes):
         access_ext = '|url-access=subscription'
 
     wiki_ref = '<ref>{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
-          '{date} {access_date} |work={work} {publisher} ' \
+          '{date} {access_date} |website={website} {publisher} ' \
           '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {trans_title} {access} }}}}</ref>'
-    wiki_ref = wiki_ref.format(title=attributes[Attribute.TITLE], url=url, date=date_ext, 
-                               access_date=access_date_ext, work=attributes[Attribute.WORK], 
-                               publisher=publisher_ext, last=last, first=first, archive_url=archive_url, 
-                               archive_date=archive_date, trans_title=trans_ext, access=access_ext)
+    wiki_ref = wiki_ref.format(title=title, url=url, date=date_ext, 
+                               access_date=access_date_ext, website=website, publisher=publisher_ext, 
+                               last=last, first=first, archive_url=archive_url, archive_date=archive_date, 
+                               trans_title=trans_ext, access=access_ext)
     # Remove redundant and trailing spaces
     wiki_ref = ' '.join(wiki_ref.split())
 
