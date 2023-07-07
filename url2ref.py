@@ -5,6 +5,7 @@ from datetime import datetime
 from babel.dates import format_date
 from translate import Translator
 
+import difflib
 import dateutil.parser
 import extruct
 import requests
@@ -14,6 +15,7 @@ import wayback
 import wayback.exceptions
 import fasttext
 import os
+import deepl
 
 # Supress FastText warning
 # See: https://stackoverflow.com/a/66401601
@@ -137,6 +139,49 @@ def get_sub_dictionary(dictionary, target_key, target_value):
                 if item[target_key] == target_value:
                     return item
 
+def translate(text, target_lang):
+    # Predict language of text
+    model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
+    lang_detector = fasttext.load_model(model_loc)
+    prediction = lang_detector.predict(text, k=1)
+    # Grab the language label and remove the '__label__' prefix
+    src_lang = prediction[0][0][9:]
+    pred_confidence = prediction[1][0]
+
+    if pred_confidence < .5:
+        # TODO: src_lang = HTML lang attribute
+        print('')
+
+    translation = ''
+    # Translate if text differs from target language
+    # with certain confidence
+    if (target_lang[:2] != src_lang and pred_confidence >= .5):
+        translator = None
+
+        # If DeepL API key is available, use DeepL for translation.
+        # Otherwise fall back to default translator.
+        DEEPL_API_KEY = os.getenv('DEEPL_API_KEY')
+        if DEEPL_API_KEY:
+            translator = deepl.Translator(DEEPL_API_KEY, send_platform_info=False)
+            limit_reached = translator.get_usage().any_limit_reached
+        if translator and not limit_reached:
+            translator.set_app_info("url2ref", "0.1")
+            # Converting to a target language string accepted by DeepL
+            language_codes = [language.code for language in translator.get_target_languages()]
+            # Upper-case to achieve sensible results with difflib
+            # as the language codes are in upper case
+            target_lang = target_lang.upper()
+            language_match = difflib.get_close_matches(target_lang, language_codes, n=1, cutoff=0)[0]
+            print(language_match)
+            #translation = translator.translate_text(text=text,
+                                                    #source_lang=src_lang,
+                                                    #target_lang=language_match).text
+        else:
+            translator = Translator(target_lang[:2], src_lang)
+            translation = translator.translate(text)
+
+    return translation, src_lang
+
 def create_wiki_reference(attributes):
     """Return a string reference in Wiki markup using the {{Cite web}} template from English Wikipedia.
 
@@ -171,6 +216,8 @@ def create_wiki_reference(attributes):
     # TODO: Parse authors (support multiple authors), format string and insert it within larger citation string
     author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
     authors = attributes[Attribute.AUTHORS]
+    last = ''
+    first = ''
     if authors:
         if type(authors) == list:
             matches = author_reg.findall(authors[0])
@@ -179,9 +226,6 @@ def create_wiki_reference(attributes):
         if matches:
             last  = matches[0][1]
             first = matches[0][0]
-    else:
-        last = ''
-        first = ''
 
     # Use wayback to construct an archive URL and date
     client = wayback.WaybackClient()
@@ -202,20 +246,11 @@ def create_wiki_reference(attributes):
     if publisher:
         publisher_ext = '|publisher={}'.format(publisher)
 
-    # Predict title language
-    model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
-    lang_detector = fasttext.load_model(model_loc)
-    prediction = lang_detector.predict(attributes[Attribute.TITLE], k=1)
-    # Grab the language label and remove the '__label__' prefix
-    src_lang = prediction[0][0][9:]
-    pred_confidence = prediction[1][0]
-
-    # Translate the title if article language differs from user language
-    dst_lang = 'en'
+    # Title language detection and translation
+    title = attributes[Attribute.TITLE]
     trans_ext = ''
-    if (dst_lang != src_lang and pred_confidence >= 0.85):
-        translator = Translator(dst_lang, src_lang)
-        translation = translator.translate(attributes[Attribute.TITLE])
+    if title:
+        translation, src_lang = translate(text=title, target_lang='en_US')
         trans_ext = '|language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
     
     # Check access
@@ -226,9 +261,9 @@ def create_wiki_reference(attributes):
     if attributes[Attribute.ACCESS] == 'False':
         access_ext = '|url-access=subscription'
 
-    wiki_ref = '{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
+    wiki_ref = '<ref>{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
           '{date} {access_date} |work={work} {publisher} ' \
-          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {trans_title} {access} }}}}'
+          '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {trans_title} {access} }}}}</ref>'
     wiki_ref = wiki_ref.format(title=attributes[Attribute.TITLE], url=url, date=date_ext, 
                                access_date=access_date_ext, work=attributes[Attribute.WORK], 
                                publisher=publisher_ext, last=last, first=first, archive_url=archive_url, 
