@@ -11,6 +11,13 @@ Manually citing a news article on the web in a thorough manner can be a tedious 
 
 The application [has a web front end](https://url2ref.onrender.com/) hosted by [Render](https://render.com), making it easy to retrieve a reference simply by pasting a URL into the query field. The front end is created with [Bootstrap via npm](https://getbootstrap.com/docs/5.0/getting-started/download/#npm).
 
+## Features
+
+* Generate a [{{cite web}}](https://en.wikipedia.org/wiki/Template:Cite_web) Wikipedia markup reference for a given URL
+* Locale-aware date format conversion and title translation
+* Automatic insertion of an archived URL from the [Internet Archive](https://en.wikipedia.org/wiki/Internet_Archive) using the [Wayback Machine](http://web.archive.org/)
+* Automatic title translation using the [DeepL API](https://www.deepl.com/en/docs-api/)
+
 ## Local execution
 
 ### Script
