@@ -34,16 +34,14 @@ Attribute = Enum('Attribute', ['URL', 'TITLE', 'AUTHORS', 'DATE', 'WEBSITE', 'PU
 #       jsonld.get('author').get('name')
 # There are multiple possible fetching paths within a format for each attribute
 lookup_formats = ['json-ld', 'dublincore', 'microdata', 'microformat', 'opengraph', 'rdfa']
-lookup_url = [('opengraph', ['og:url']), 
-              ('rdfa', ['@id'])]
+lookup_url = [('opengraph', ['og:url'])]
 lookup_author = [('json-ld', ['author', 'name']),
                  ('json-ld', ['creator', 'name']),
                  ('opengraph', ['article:author']),
                  ('rdfa', ['http://ogp.me/ns/article#author'])]
 lookup_title = [('json-ld', ['headline']), 
                 ('opengraph', ['og:title']),
-                ('json-ld', ['alternativeHeadline']),
-                ('opengraph', ['og:site_name'])]
+                ('json-ld', ['alternativeHeadline'])]
 lookup_date = [('json-ld', ['datePublished']),
                ('opengraph', ['article:published_time']),
                ('opengraph', ['og:article:published_time']),
@@ -52,9 +50,9 @@ lookup_date = [('json-ld', ['datePublished']),
                # without an explicit publication date:
                ('opengraph', ['article:modified_time']),
                ('opengraph', ['og:article:modified_time'])]
-lookup_website = [('opengraph', ['og:site_name'])]
-               #('json-ld', ['sourceOrganization', 'name']),
-               #('json-ld', ['copyrightHolder', 'name'])]
+lookup_website = [('opengraph', ['og:site_name']),
+                  ('json-ld', ['sourceOrganization', 'name']),
+                  ('json-ld', ['copyrightHolder', 'name'])]
 lookup_publisher = [('json-ld', ['publisher', 'name'])]
 lookup_access = [('json-ld', ['isAccessibleForFree']),
                  ('json-ld', ['hasPart', 'isAccessibleForFree']),
@@ -62,15 +60,15 @@ lookup_access = [('json-ld', ['isAccessibleForFree']),
 lookup_language = [('json-ld', ['inLanguage']),
                    ('opengraph', ['og:locale'])]
 
-def fetch_attribute(lookup_dict, metadata):
-    """Returns a value associated with the metadata item in the given lookup dictionary.
+def find_attribute_values(lookup_dict, json_data):
+    """Returns a list of values within the metadata for the attributes in the lookup dictionary.
     
     Args:
-        lookup_dict: Dictionary of paths to certain information for different metadata formats.
-        data: Metadata dictionary in the format returned by extruct.extract(uniform=True).
+        lookup_dict: Dictionary of potential paths to attribute values within the metadata
+        data: Metadata dictionary in the format returned by extruct.extract(uniform=True)
 
     Returns:
-        item: String retrieved from the metadata using the lookup dictionary 
+        values: List of values retrieved from the metadata using the lookup dictionary
     """
     def collect_item(path, dic):
         if (len(path) > 1):
@@ -78,12 +76,30 @@ def fetch_attribute(lookup_dict, metadata):
         if isinstance(dic, list): dic = dic[0]
         return dic.get(path[0])
 
-    for format, path in lookup_dict:
-        if metadata[format]:
-            item = collect_item(path, metadata[format][0])
-            if item: # Return first non-empty result
-                return item
-    return None
+    def find_rec(json_data, attribute_path, values):
+        if isinstance(json_data, dict):
+            for key, value in json_data.items():
+                if key == attribute_path[0]:
+                    if len(attribute_path) > 1:
+                        find_rec(json_data[key], attribute_path[1:], values)
+                    else: # Item can be retrieved
+                        if isinstance(value, list):
+                            for subitem in value:
+                                if subitem not in values:
+                                    values.append(subitem)
+                        elif value not in values:
+                            values.append(value)
+                elif isinstance(value, (dict, list)):
+                    find_rec(value, attribute_path, values)
+        elif isinstance(json_data, list):
+            for item in json_data:
+                find_rec(item, attribute_path, values)
+                
+    values = []
+    for format, attribute_path in lookup_dict:
+        if json_data[format]:
+            find_rec(json_data, attribute_path, values)
+    return values
 
 def get_reference_attributes(metadata):
     """Returns a dictionary of reference attributes based on the given metadata.
@@ -94,15 +110,15 @@ def get_reference_attributes(metadata):
     Returns:
         attributes: Reference attributes to construct a citation.
     """
-    attributes = defaultdict(lambda: '')
-    attributes[Attribute.URL]       = fetch_attribute(lookup_url, metadata)
-    attributes[Attribute.TITLE]     = fetch_attribute(lookup_title, metadata)
-    attributes[Attribute.AUTHORS]   = fetch_attribute(lookup_author, metadata)
-    attributes[Attribute.DATE]      = fetch_attribute(lookup_date, metadata)
-    attributes[Attribute.WEBSITE]   = fetch_attribute(lookup_website, metadata)
-    attributes[Attribute.PUBLISHER] = fetch_attribute(lookup_publisher, metadata)
-    attributes[Attribute.ACCESS]    = fetch_attribute(lookup_access, metadata)
-    attributes[Attribute.LANGUAGE]  = fetch_attribute(lookup_language, metadata)
+    attributes = defaultdict(lambda: [])
+    attributes[Attribute.URL]       = find_attribute_values(lookup_url, metadata)
+    attributes[Attribute.TITLE]     = find_attribute_values(lookup_title, metadata)
+    attributes[Attribute.AUTHORS]   = find_attribute_values(lookup_author, metadata)
+    attributes[Attribute.DATE]      = find_attribute_values(lookup_date, metadata)
+    attributes[Attribute.WEBSITE]   = find_attribute_values(lookup_website, metadata)
+    attributes[Attribute.PUBLISHER] = find_attribute_values(lookup_publisher, metadata)
+    attributes[Attribute.ACCESS]    = find_attribute_values(lookup_access, metadata)
+    attributes[Attribute.LANGUAGE]  = find_attribute_values(lookup_language, metadata)
 
     return attributes
 
@@ -125,24 +141,6 @@ def extract_metadata(url):
     metadata = extruct.extract(encoded_content, encoding='utf-8', base_url=base_url, uniform=True)
 
     return metadata
-
-def get_sub_dictionary(dictionary, target_key, target_value):
-    """Return a dictionary containing the specified key-value pair. 
-    
-    Args:
-        dictionary: Metadata dictionary containing lists of other dictionaries
-        target_key: Target key to search for within a dictionary inside a list.
-        target_value: Target value to search for within a dictionary inside a list
-    
-    Returns:
-        target_dictionary: Target dictionary that contains target key value pair. 
-    """
-    
-    for key in dictionary:
-        if len(dictionary[key]) > 0:
-            for item in dictionary[key]:
-                if item[target_key] == target_value:
-                    return item
 
 def translate(text, target_lang):
     """Return a translated text given a text and a target language.
@@ -205,40 +203,46 @@ def create_wiki_reference(attributes):
         wiki_ref: {{Cite web}} string reference in Wiki markup
     """
     url = attributes[Attribute.URL]
+    if url:
+        url = url[0]
 
     locale = attributes[Attribute.LANGUAGE]
-    if not locale:
+    if locale:
+        locale = locale[0]
+    else:
         locale = 'en_US'
 
     # Formatting date
     date = attributes[Attribute.DATE]
     date_ext = ''
     access_date_ext = ''
+    # TODO: Add this as function parameter
+    user_locale = 'en_US'
     if date:
+        date = date[0]
         try:
             parsed_date = dateutil.parser.parse(date)
-            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=locale))
+            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=user_locale))
         except dateutil.parser.ParserError:
             date_ext = '' 
-
     # Setting access-date if date of publication isn't found
     if date_ext == '':
         now = datetime.now()
-        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=locale))
+        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=user_locale))
 
-    # TODO: Parse authors (support multiple authors), format string and insert it within larger citation string
+    # Authors
     author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
     authors = attributes[Attribute.AUTHORS]
-    last = ''
-    first = ''
+    author_ext = ''
+    matches = []
     if authors:
-        if type(authors) == list:
-            matches = author_reg.findall(authors[0])
-        else:
-            matches = author_reg.findall(authors)
-        if matches:
-            last  = matches[0][1]
-            first = matches[0][0]
+        for author in authors:
+            first_and_last = author_reg.findall(author)
+            if first_and_last:
+                matches.append(first_and_last)
+        for i in range(len(matches)):
+            author = '|last{n}={last} |first{n}={first}'.format(n=i+1, first=matches[i][0][0], last=matches[i][0][1])
+            author_ext += author
 
     # Use wayback to construct an archive URL and date
     client = wayback.WaybackClient()
@@ -255,6 +259,8 @@ def create_wiki_reference(attributes):
 
     # Website
     website = attributes[Attribute.WEBSITE]
+    if website:
+        website = website[0]
     if not website:
         try:
             results = tldextract.extract(url)
@@ -266,17 +272,19 @@ def create_wiki_reference(attributes):
     publisher = attributes[Attribute.PUBLISHER]
     publisher_ext = ''
     if publisher:
+        publisher = publisher[0]
         publisher_ext = '|publisher={}'.format(publisher)
 
     # Title language detection and translation
     title = attributes[Attribute.TITLE]
     trans_ext = ''
     if title:
+        title = title[0]
         # TODO: Set target lang depending on provided user parameter 
         # in command / front end
         target_lang = 'en'
         translation, src_lang = translate(text=title, target_lang=target_lang)
-        if src_lang == target_lang:
+        if src_lang == target_lang or not translation:
             trans_ext = ''
         else:
             trans_ext = '|language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
@@ -286,15 +294,18 @@ def create_wiki_reference(attributes):
     # the user to specify the type of access (limited, registration, or subscription)
     # if free access is 'False'
     access_ext = ''
-    if attributes[Attribute.ACCESS] == 'False':
+    access = attributes[Attribute.ACCESS]
+    if access:
+        access = access[0]
+    if access == 'False':
         access_ext = '|url-access=subscription'
 
-    wiki_ref = '<ref>{{{{cite web |last={last} |first={first} |title={title} |url={url} ' \
+    wiki_ref = '<ref>{{{{cite web {authors} |title={title} |url={url} ' \
           '{date} {access_date} |website={website} {publisher} ' \
           '|archive-url={archive_url} |archive-date={archive_date} |url-status=live {trans_title} {access} }}}}</ref>'
     wiki_ref = wiki_ref.format(title=title, url=url, date=date_ext, 
                                access_date=access_date_ext, website=website, publisher=publisher_ext, 
-                               last=last, first=first, archive_url=archive_url, archive_date=archive_date, 
+                               authors=author_ext, archive_url=archive_url, archive_date=archive_date, 
                                trans_title=trans_ext, access=access_ext)
     # Remove redundant and trailing spaces
     wiki_ref = ' '.join(wiki_ref.split())
