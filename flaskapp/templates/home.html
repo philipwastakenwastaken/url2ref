@@ -1,11 +1,42 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<form class="form-inline d-flex justify-content-center pb-4" method="POST" action="">
+<form class="form-inline pb-4" method="POST" action="">
   {{ form.hidden_tag() }}
-  <div class="form-group">
-    {{ form.field }}
-    {{ form.submit }}
+  <div class="container form-group">
+    <div class="row g-3">
+      <div class="col-sm-7">
+        <div class="input-group mb-2">
+          <div class="input-group-prepend">
+            <span class="input-group-text">URL</span>
+          </div>
+          {{ form.url_field(class_='form-control', placeholder_="https://github.com/BX326/url2ref") }}
+        </div>
+      </div>
+      <div class="col-sm">
+        <div class="input-group mb-2">
+          <div class="input-group-prepend">
+            <span class="input-group-text">SRC</span>
+          </div>
+          {{ form.src_lang_field(class_='form-control',
+                            placeholder_='ISO 639-1 code') }}
+        </div>
+      </div>
+      <div class="col-sm">
+        <div class="input-group mb-2">
+          <div class="input-group-prepend">
+            <span class="input-group-text">TARG</span>
+          </div>
+          {{ form.targ_lang_field(class_='form-control',
+                            placeholder_='ISO 639-1 code') }}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="text-center">
+        {{ form.submit }}
+      </div>
+    </div>
   </div>
 </form>
 <div class="pb-4">

@@ -142,7 +142,7 @@ def extract_metadata(url):
 
     return metadata
 
-def translate(text, target_lang):
+def translate(text, target_lang, source_lang=None):
     """Return a translated text given a text and a target language.
     
     Args:
@@ -152,22 +152,32 @@ def translate(text, target_lang):
     Returns:
         translation: The translated text
     """
-    # Predict language of text
-    model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
-    lang_detector = fasttext.load_model(model_loc)
-    prediction = lang_detector.predict(text, k=1)
-    # Grab the language label and remove the '__label__' prefix
-    src_lang = prediction[0][0][9:]
-    pred_confidence = prediction[1][0]
+    def predict_lang(text):
+        # Predict language of text
+        model_loc = os.path.join(os.path.dirname(__file__), 'fasttext/lid.176.ftz')
+        lang_detector = fasttext.load_model(model_loc)
+        prediction = lang_detector.predict(text, k=1)
+        # Grab the language label and remove the '__label__' prefix
+        pred_lang = prediction[0][0][9:]
+        pred_conf = prediction[1][0]
 
-    if pred_confidence < .5:
-        # TODO: src_lang = HTML lang attribute
-        print('')
+        if pred_conf < .5:
+            # TODO: src_lang = HTML lang attribute
+            print('')
+
+        return pred_lang, pred_conf
+
+    if not source_lang:
+        pred_lang, pred_conf = predict_lang(text)
+        text_lang = pred_lang
+    else:
+        pred_conf = 1
+        text_lang = source_lang
 
     translation = ''
     # Translate if text differs from target language
     # with certain confidence
-    if (target_lang != src_lang and pred_confidence >= .5):
+    if (target_lang != text_lang and pred_conf >= .5):
         translator = None
 
         # If DeepL API key is available, use DeepL for translation.
@@ -185,15 +195,15 @@ def translate(text, target_lang):
             target_lang = target_lang.upper()
             language_match = difflib.get_close_matches(target_lang, language_codes, n=1, cutoff=0)[0]
             translation = translator.translate_text(text=text,
-                                                    source_lang=src_lang,
+                                                    source_lang=text_lang,
                                                     target_lang=language_match).text
         else:
-            translator = Translator(target_lang, src_lang)
+            translator = Translator(target_lang, text_lang)
             translation = translator.translate(text)
 
-    return translation, src_lang
+    return translation, text_lang
 
-def create_wiki_reference(attributes):
+def create_wiki_reference(attributes, src_lang, targ_lang):
     """Return a string reference in Wiki markup using the {{Cite web}} template from English Wikipedia.
 
     Args:
@@ -280,14 +290,11 @@ def create_wiki_reference(attributes):
     trans_ext = ''
     if title:
         title = title[0]
-        # TODO: Set target lang depending on provided user parameter 
-        # in command / front end
-        target_lang = 'en'
-        translation, src_lang = translate(text=title, target_lang=target_lang)
-        if src_lang == target_lang or not translation:
+        translation, detected_lang = translate(text=title, target_lang=targ_lang)
+        if detected_lang == targ_lang or not translation:
             trans_ext = ''
         else:
-            trans_ext = '|language={lang} |trans-title={title}'.format(lang=src_lang, title=translation)
+            trans_ext = '|language={lang} |trans-title={title}'.format(lang=detected_lang, title=translation)
     
     # Check access
     # TODO: Instead of assuming subscription is required, instead ask
@@ -312,10 +319,12 @@ def create_wiki_reference(attributes):
 
     return wiki_ref
 
-def url2ref(url):
+def url2ref(url, src_lang='auto detect', targ_lang='en'):
     metadata = extract_metadata(url)
     attributes = get_reference_attributes(metadata)
-    wiki_ref = create_wiki_reference(attributes)
+    wiki_ref = create_wiki_reference(attributes, 
+                                     src_lang=src_lang, 
+                                     targ_lang=targ_lang)
 
     return wiki_ref
 
