@@ -34,7 +34,7 @@
     </div>
     <div class="row">
       <div class="text-center">
-        {{ form.submit }}
+        {{ form.submit(class_="btn btn-outline-secondary") }}
       </div>
     </div>
   </div>
@@ -43,11 +43,23 @@
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
-        <div>
+      <div>
           {{ message }}
-        </div>
+      </div>
+      <div class="text-center">
+          <button class="btn btn-outline-secondary" onClick="copyToClipboard('{{message}}')">Copy reference</button>
+      </div>
       {% endfor %}
     {% endif %}
   {% endwith %}
 </div>
 {% endblock content %}
+
+
+{% block scripts %}
+<script>
+    function copyToClipboard(msg) {
+        navigator.clipboard.writeText(msg)
+    }
+</script>
+{% endblock %}
