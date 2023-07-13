@@ -6,12 +6,82 @@ $primary: #000720;
 // Then add additional custom code here
 body {
     min-height:100vh;
- }
- 
+}
+
 .flex-fill {
     flex:1 1 auto;
 }
 
 .main-search {
     padding-top: 30vh;
+}
+
+.logo {
+    width:200px;
+    height:80px;
+}
+
+.logo-part {
+    fill:#fff;
+}
+  
+@keyframes slide-url {
+    0% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(140%);
+    }
+    50% {
+      transform: translateX(140%);
+    }
+    75% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(0);
+    }
+}
+
+@keyframes slide-ref {
+    0% {
+      transform: translateX(-140%);
+    }
+    25% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(0);
+    }
+    75% {
+      transform: translateX(-140%);
+    }
+    100% {
+      transform: translateX(-140%);
+    }
+}
+  
+.logo-url, .logo-ref {
+    font-size: 20px;
+    fill: #fff;
+    transition: opacity 1s ease-in-out;
+}
+
+.logo-2 {
+    font-size: 20px;
+    fill: #000;
+}
+
+.logo-url {
+    animation: slide-url 6s linear infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.logo-ref {
+    animation: slide-ref 6s linear infinite;
+    animation-timing-function: ease-in-out;
+}
+  
+.logo-box {
+    fill: #fff;
 }

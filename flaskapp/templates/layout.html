@@ -26,7 +26,20 @@
     <main class="flex-shrink-0">
       <div class="container">
         <div class="main-search">
-          <h1 class="text-center pb-2"><b>url2ref</b></h1>
+          <div class="logo-container d-flex justify-content-center">
+            <div class="logo d-flex flex-row justify-content-center">
+              <svg class="logo-part" viewBox="0 0 35 40">
+                <text class="logo-url" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">url</text>
+              </svg>
+              <svg class="logo-part" viewBox="0 0 20 40">
+                <rect class="logo-box" x="0" y="14%" dominant-baseline="middle" width="20" height="25"></rect>
+                <text class="logo-2" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">2</text>
+              </svg>
+              <svg class="logo-part" viewBox="0 0 35 40">
+                <text class="logo-ref" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">ref</text>
+              </svg>
+            </div>
+          </div>
           {% block content %}{% endblock %}
         </div>
       </div>
