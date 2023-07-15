@@ -30,7 +30,13 @@ python url2ref.py -u <URL>
 
 ### Flask app
 
-To build and run the front end locally, first install the required Python packages by running ``pip install -r requirements.txt`` &ndash; preferably within a virtual environment &ndash; and then install the needed Bootstrap files with ``npm i bootstrap @popperjs/core`` from within the ``flaskapp/static/assets`` folder. Then, a Flask development server can be started locally with ``flask --app app --debug run``.
+To build and run the front end locally, first install the required Python packages by running ``pip install -r requirements.txt`` &ndash; preferably within a virtual environment. Then, from within the ``flaskapp/static/assets`` folder, install the needed ``npm`` packages with the following command:
+
+```bash
+npm i bootstrap@5.3.0 @popperjs/core@2.11.8 bootstrap-icons@1.10.5
+```
+
+A Flask development server can then be started locally by running ``flask --app app --debug run`` from within the ``flaskapp`` directory.
 
 ## License
 

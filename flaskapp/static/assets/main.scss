@@ -1,9 +1,8 @@
-// Include any default variable overrides here (though functions won't be available)
-$primary: #000720;
+$color-mode-type: data;
 
 @import "node_modules/bootstrap/scss/bootstrap";
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css");
 
-// Then add additional custom code here
 body {
     min-height:100vh;
 }
@@ -60,28 +59,39 @@ body {
       transform: translateX(-140%);
     }
 }
-  
-.logo-url, .logo-ref {
-    font-size: 20px;
-    fill: #fff;
-    transition: opacity 1s ease-in-out;
+
+@include color-mode(dark) {
+  .logo-url, .logo-ref .logo-box {
+      fill: #fff;
+  }
+
+  .logo-2 {
+      font-size: 20px;
+      fill: rgb(33,37,41);
+  }
 }
 
-.logo-2 {
-    font-size: 20px;
-    fill: #000;
+@include color-mode(light) {
+  .logo-url, .logo-ref, .logo-box {
+      fill: rgb(33,37,41);
+  }
+
+  .logo-2 {
+      font-size: 20px;
+      fill: #fff;
+  }
 }
 
 .logo-url {
-    animation: slide-url 6s linear infinite;
-    animation-timing-function: ease-in-out;
+  font-size: 20px;
+  animation: slide-url 6s linear infinite;
+  animation-timing-function: ease-in-out;
+  transition: opacity 1s ease-in-out;
 }
 
 .logo-ref {
-    animation: slide-ref 6s linear infinite;
-    animation-timing-function: ease-in-out;
-}
-  
-.logo-box {
-    fill: #fff;
+  font-size: 20px;
+  animation: slide-ref 6s linear infinite;
+  animation-timing-function: ease-in-out;
+  transition: opacity 1s ease-in-out;
 }

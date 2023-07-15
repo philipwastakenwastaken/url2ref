@@ -1,5 +1,7 @@
 # Node
 flaskapp/static/assets/node_modules
+flaskapp/static/assets/package-lock.json
+flaskapp/static/assets/package.json
 flaskapp/static/css
 flaskapp/static/js
 

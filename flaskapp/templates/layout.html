@@ -13,15 +13,22 @@
     <meta name="description" content="Application for creating a reference given a web address">
     <meta name="keywords" content="reference generator, url2ref">
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
     <title>url2ref</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    
+    <!-- https://flask-assets.readthedocs.io/en/latest/#using-the-bundles -->
+    {% assets "scss_all" %}
+        <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
+    {% endassets %}
   </head>
 
   <body class="d-flex flex-column h-100">
+    <header class="text-center">
+      <svg class="bi" width="20" height="20" type="button" fill="currentColor" id="bd-theme" alt="Toggle theme" aria-label="Toggle theme (dark)">
+        <use xlink:href="../static/assets/node_modules/bootstrap-icons/bootstrap-icons.svg#circle-half"/>
+      </svg>
+    </header>
+
     <!-- Container -->
     <main class="flex-shrink-0">
       <div class="container">
@@ -51,14 +58,9 @@
         <span class="text-muted">A <a href="https://github.com/BX326/url2ref">project</a> by BX326 (2023)</span>
       </div>
     </footer>
-
-    <!-- https://flask-assets.readthedocs.io/en/latest/#using-the-bundles -->
-    {% assets "scss_all" %}
-        <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
-    {% endassets %}
-
-    {% assets "js_all" %}
-        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
-    {% endassets %}
   </body>
+
+  {% assets "js_all" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {% endassets %}
 </html>
