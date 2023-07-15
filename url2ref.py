@@ -4,6 +4,7 @@ from w3lib.html import get_base_url
 from datetime import datetime
 from babel.dates import format_date
 from translate import Translator
+from nameparser import HumanName
 
 import difflib
 import dateutil.parser
@@ -238,18 +239,21 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
         access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=user_locale))
 
     # Authors
-    author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
     authors = attributes[Attribute.AUTHORS]
     author_ext = ''
-    matches = []
+    names = []
     if authors:
         for author in authors:
-            first_and_last = author_reg.findall(author)
-            if first_and_last:
-                matches.append(first_and_last)
-        for i in range(len(matches)):
-            author = '|last{n}={last} |first{n}={first}'.format(n=i+1, first=matches[i][0][0], last=matches[i][0][1])
-            author_ext += author
+            name = HumanName(author)
+            names.append(name)
+        for i in range(len(names)):
+            name = names[i]
+            if name.first and name.last:
+                first_name = ' '.join('{first} {middle}'.format(first=name.first, middle=name.middle).split())
+                number = i+1 if len(names) > 1 else ''
+                author_ext += '|last{n}={last} |first{n}={first}'.format(n=number, first=first_name, last=name.last)
+            else:
+                author_ext += '|author{n}={name}'.format(n=i+1, name=name.first)
 
     # Use wayback to construct an archive URL and date
     client = wayback.WaybackClient()
