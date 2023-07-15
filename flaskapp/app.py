@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash
 from url2ref import url2ref
-from .url import UrlInputForm
+from .form import UrlInputForm
 from flask_assets import Environment, Bundle
 
 import os
@@ -39,9 +39,14 @@ assets.register("scss_all", scss)
 def home():
     form = UrlInputForm()
     if form.validate_on_submit():
-        res = url2ref(url=form.url_field.data, 
-                      src_lang=form.src_lang_field.data, 
-                      targ_lang=form.targ_lang_field.data)
+        src_lang = form.src_lang_field.data
+        if src_lang == 'auto':
+            res = url2ref(url=form.url_field.data, 
+                          targ_lang=form.targ_lang_field.data)
+        else:
+            res = url2ref(url=form.url_field.data, 
+                          src_lang=src_lang, 
+                          targ_lang=form.targ_lang_field.data)
         flash(res, 'success')
     return render_template('home.html', form=form)
 

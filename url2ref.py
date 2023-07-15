@@ -161,23 +161,20 @@ def translate(text, target_lang, source_lang=None):
         pred_lang = prediction[0][0][9:]
         pred_conf = prediction[1][0]
 
-        if pred_conf < .5:
-            # TODO: src_lang = HTML lang attribute
-            print('')
-
         return pred_lang, pred_conf
 
+    # Predict source language if not specified
     if not source_lang:
         pred_lang, pred_conf = predict_lang(text)
-        text_lang = pred_lang
-    else:
-        pred_conf = 1
-        text_lang = source_lang
+        if pred_conf >= .5:
+            source_lang = pred_lang
+        #else:
+            # TODO: source_lang = HTML lang attribute
 
     translation = ''
     # Translate if text differs from target language
     # with certain confidence
-    if (target_lang != text_lang and pred_conf >= .5):
+    if (source_lang and target_lang != source_lang):
         translator = None
 
         # If DeepL API key is available, use DeepL for translation.
@@ -195,13 +192,13 @@ def translate(text, target_lang, source_lang=None):
             target_lang = target_lang.upper()
             language_match = difflib.get_close_matches(target_lang, language_codes, n=1, cutoff=0)[0]
             translation = translator.translate_text(text=text,
-                                                    source_lang=text_lang,
+                                                    source_lang=source_lang,
                                                     target_lang=language_match).text
         else:
-            translator = Translator(target_lang, text_lang)
+            translator = Translator(target_lang, source_lang)
             translation = translator.translate(text)
 
-    return translation, text_lang
+    return translation, source_lang
 
 def create_wiki_reference(attributes, src_lang, targ_lang):
     """Return a string reference in Wiki markup using the {{Cite web}} template from English Wikipedia.
@@ -290,7 +287,7 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
     trans_ext = ''
     if title:
         title = title[0]
-        translation, detected_lang = translate(text=title, target_lang=targ_lang)
+        translation, detected_lang = translate(text=title, source_lang=src_lang, target_lang=targ_lang)
         if detected_lang == targ_lang or not translation:
             trans_ext = ''
         else:
@@ -319,7 +316,7 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
 
     return wiki_ref
 
-def url2ref(url, src_lang='auto detect', targ_lang='en'):
+def url2ref(url, src_lang=None, targ_lang='en'):
     metadata = extract_metadata(url)
     attributes = get_reference_attributes(metadata)
     wiki_ref = create_wiki_reference(attributes, 
