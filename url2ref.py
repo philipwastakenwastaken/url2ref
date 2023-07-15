@@ -224,19 +224,17 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
     date = attributes[Attribute.DATE]
     date_ext = ''
     access_date_ext = ''
-    # TODO: Add this as function parameter
-    user_locale = 'en_US'
     if date:
         date = date[0]
         try:
             parsed_date = dateutil.parser.parse(date)
-            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=user_locale))
+            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=targ_lang))
         except dateutil.parser.ParserError:
-            date_ext = '' 
+            date_ext = ''
     # Setting access-date if date of publication isn't found
     if date_ext == '':
         now = datetime.now()
-        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=user_locale))
+        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=targ_lang))
 
     # Authors
     authors = attributes[Attribute.AUTHORS]
