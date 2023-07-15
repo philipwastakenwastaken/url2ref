@@ -21,6 +21,7 @@ assets.url = app.static_url_path
 js = Bundle(
     "assets/node_modules/@popperjs/core/dist/umd/popper.min.js",
     "assets/node_modules/bootstrap/dist/js/bootstrap.min.js",
+    "assets/custom.js",
     filters="jsmin",
     output="js/generated.js"
 )
