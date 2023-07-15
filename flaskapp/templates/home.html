@@ -46,8 +46,13 @@
       <div class="pb-2">
           {{ message }}
       </div>
-      <div class="text-center">
-          <button class="btn btn-outline-secondary" onClick="copyToClipboard('{{message}}')">Copy reference</button>
+      <div class="text-center pt-2">
+        <button id="copy-to-clipboard" class="btn btn-outline-secondary" onClick="copyToClipboard('{{message}}')">
+          <svg class="bi bi-clipboard" width="20" height="20" type="button" fill="currentColor">
+            <use xlink:href="../static/assets/node_modules/bootstrap-icons/bootstrap-icons.svg#clipboard"/>
+          </svg>
+          Copy
+        </button>
       </div>
       {% endfor %}
     {% endif %}
