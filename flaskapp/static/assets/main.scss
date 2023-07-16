@@ -12,16 +12,12 @@ body {
 }
 
 .main-search {
-    padding-top: 30vh;
+    padding-top: 25vh;
 }
 
 .logo {
     width:200px;
     height:80px;
-}
-
-.logo-part {
-    fill:#fff;
 }
   
 @keyframes slide-url {
@@ -61,7 +57,7 @@ body {
 }
 
 @include color-mode(dark) {
-  .logo-url, .logo-ref .logo-box {
+  .logo-url, .logo-ref, .logo-box {
       fill: #fff;
   }
 

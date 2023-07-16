@@ -4,6 +4,7 @@ from w3lib.html import get_base_url
 from datetime import datetime
 from babel.dates import format_date
 from translate import Translator
+from nameparser import HumanName
 
 import difflib
 import dateutil.parser
@@ -135,7 +136,11 @@ def extract_metadata(url):
     # reject requests from the standard header used by the 'requests' library
     headers = {'User-Agent': 'Mozilla/5.0'}
     
-    r = requests.get(url, headers=headers)
+    try:
+        r = requests.get(url, headers=headers)
+    except requests.exceptions.MissingSchema:
+        r = requests.get('https://'+url, headers=headers)
+        
     base_url = get_base_url(r.text, r.url)
     encoded_content = r.text.encode('utf-8')
     metadata = extruct.extract(encoded_content, encoding='utf-8', base_url=base_url, uniform=True)
@@ -200,7 +205,7 @@ def translate(text, target_lang, source_lang=None):
 
     return translation, source_lang
 
-def create_wiki_reference(attributes, src_lang, targ_lang):
+def create_wiki_reference(attributes, src_lang, targ_lang, input_url):
     """Return a string reference in Wiki markup using the {{Cite web}} template from English Wikipedia.
 
     Args:
@@ -212,6 +217,8 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
     url = attributes[Attribute.URL]
     if url:
         url = url[0]
+    else:
+        url = input_url
 
     locale = attributes[Attribute.LANGUAGE]
     if locale:
@@ -223,33 +230,34 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
     date = attributes[Attribute.DATE]
     date_ext = ''
     access_date_ext = ''
-    # TODO: Add this as function parameter
-    user_locale = 'en_US'
     if date:
         date = date[0]
         try:
             parsed_date = dateutil.parser.parse(date)
-            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=user_locale))
+            date_ext = '|date={}'.format(format_date(parsed_date, format='long', locale=targ_lang))
         except dateutil.parser.ParserError:
-            date_ext = '' 
+            date_ext = ''
     # Setting access-date if date of publication isn't found
     if date_ext == '':
         now = datetime.now()
-        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=user_locale))
+        access_date_ext = '|access-date={}'.format(format_date(now, format='long', locale=targ_lang))
 
     # Authors
-    author_reg = re.compile('(?P<first>[\w\s]*) (?P<last>\w*)')
     authors = attributes[Attribute.AUTHORS]
     author_ext = ''
-    matches = []
+    names = []
     if authors:
         for author in authors:
-            first_and_last = author_reg.findall(author)
-            if first_and_last:
-                matches.append(first_and_last)
-        for i in range(len(matches)):
-            author = '|last{n}={last} |first{n}={first}'.format(n=i+1, first=matches[i][0][0], last=matches[i][0][1])
-            author_ext += author
+            name = HumanName(author)
+            names.append(name)
+        for i in range(len(names)):
+            name = names[i]
+            if name.first and name.last:
+                first_name = ' '.join('{first} {middle}'.format(first=name.first, middle=name.middle).split())
+                number = i+1 if len(names) > 1 else ''
+                author_ext += '|last{n}={last} |first{n}={first}'.format(n=number, first=first_name, last=name.last)
+            else:
+                author_ext += '|author{n}={name}'.format(n=i+1, name=name.first)
 
     # Use wayback to construct an archive URL and date
     client = wayback.WaybackClient()
@@ -321,7 +329,8 @@ def url2ref(url, src_lang=None, targ_lang='en'):
     attributes = get_reference_attributes(metadata)
     wiki_ref = create_wiki_reference(attributes, 
                                      src_lang=src_lang, 
-                                     targ_lang=targ_lang)
+                                     targ_lang=targ_lang,
+                                     input_url=url)
 
     return wiki_ref
 
