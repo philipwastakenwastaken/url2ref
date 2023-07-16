@@ -69,6 +69,11 @@ body {
       font-size: 20px;
       fill: rgb(33,37,41);
   }
+  
+  .custom-tooltip {
+    --bs-tooltip-bg: rgb(255, 255, 255);
+  }
+  
 }
 
 @include color-mode(light) {
@@ -79,6 +84,11 @@ body {
   .logo-2 {
       font-size: 20px;
       fill: #fff;
+  }
+
+  .custom-tooltip {
+    --bs-tooltip-bg: #444444;
+    --bs-tooltip-color: #ffffff;
   }
 }
 

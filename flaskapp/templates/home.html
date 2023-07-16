@@ -59,7 +59,7 @@
       </div>
 
       <div class="text-center pt-2">
-          <button class="btn btn-outline-secondary" onClick="copyToClipboard('{{message}}')">Copy reference</button>
+          <button type="button" id="clipboard-button" class="btn btn-outline-secondary" data-bs-custom-class="custom-tooltip" data-bs-toggle="tooltip" data-placement="top" title="Copy to clipboard" onClick="copyToClipboard('{{message}}')">Copy reference</button>
       </div>
       {% endfor %}
     {% endif %}
