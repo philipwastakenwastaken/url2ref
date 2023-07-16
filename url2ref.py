@@ -136,7 +136,11 @@ def extract_metadata(url):
     # reject requests from the standard header used by the 'requests' library
     headers = {'User-Agent': 'Mozilla/5.0'}
     
-    r = requests.get(url, headers=headers)
+    try:
+        r = requests.get(url, headers=headers)
+    except requests.exceptions.MissingSchema:
+        r = requests.get('https://'+url, headers=headers)
+        
     base_url = get_base_url(r.text, r.url)
     encoded_content = r.text.encode('utf-8')
     metadata = extruct.extract(encoded_content, encoding='utf-8', base_url=base_url, uniform=True)
@@ -201,7 +205,7 @@ def translate(text, target_lang, source_lang=None):
 
     return translation, source_lang
 
-def create_wiki_reference(attributes, src_lang, targ_lang):
+def create_wiki_reference(attributes, src_lang, targ_lang, input_url):
     """Return a string reference in Wiki markup using the {{Cite web}} template from English Wikipedia.
 
     Args:
@@ -213,6 +217,8 @@ def create_wiki_reference(attributes, src_lang, targ_lang):
     url = attributes[Attribute.URL]
     if url:
         url = url[0]
+    else:
+        url = input_url
 
     locale = attributes[Attribute.LANGUAGE]
     if locale:
@@ -323,7 +329,8 @@ def url2ref(url, src_lang=None, targ_lang='en'):
     attributes = get_reference_attributes(metadata)
     wiki_ref = create_wiki_reference(attributes, 
                                      src_lang=src_lang, 
-                                     targ_lang=targ_lang)
+                                     targ_lang=targ_lang,
+                                     input_url=url)
 
     return wiki_ref
 
