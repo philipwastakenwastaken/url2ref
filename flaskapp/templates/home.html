@@ -53,12 +53,12 @@
         </div>
         <div class="tab-content card-body" id="myTabContent">
           <div class="tab-pane fade show active" id="raw" role="tabpanel" aria-labelledby="raw-tab">
-            {{message}}
+            <div contenteditable="true" class="raw-text-box" aria-role="textbox" id="rawTextBox">{{message}}</div>
           </div>
         </div>
       </div>
       <div class="text-center pt-2">
-        <button type="button" id="copy-to-clipboard" class="btn btn-outline-secondary" data-bs-custom-class="custom-tooltip" data-bs-toggle="tooltip" data-placement="top" title="Copy to clipboard" onClick="copyToClipboard('{{message}}')">
+        <button type="button" id="copy-to-clipboard" class="btn btn-outline-secondary" data-bs-custom-class="custom-tooltip" data-bs-toggle="tooltip" data-placement="top" title="Copy to clipboard" onClick="copyToClipboard()">
           <svg class="bi bi-clipboard" width="20" height="20" type="button" fill="currentColor">
             <use xlink:href="../static/assets/node_modules/bootstrap-icons/bootstrap-icons.svg#clipboard"/>
           </svg>
